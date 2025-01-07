@@ -7,7 +7,12 @@ Base = declarative_base()  # Create the base class for SQLAlchemy
 
 
 class BaseModel:
-    id = Column(String(60), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id = Column(
+        String(60),
+        primary_key=True,
+        default=lambda: str(uuid.uuid4())
+    )
+
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
@@ -27,12 +32,17 @@ class BaseModel:
     def save(self):
         """Add the object to the session and commit changes."""
         from models import storage
-        models.storage.new(self)
-        models.storage.save()
+        storage.new(self)
+        storage.save()
 
     def to_dict(self):
         """Convert the object to a dictionary."""
-        obj_dict = {key: value for key, value in self.__dict__.items() if not key.startswith('_')}
+        obj_dict = {
+            key: value
+            for key, value in self.__dict__.items()
+            if not key.startswith('_')
+        }
+
         if '_sa_instance_state' in obj_dict:
             del obj_dict['_sa_instance_state']
         return obj_dict
@@ -40,4 +50,4 @@ class BaseModel:
     def delete(self):
         """Delete the object from storage."""
         from models import storage
-        models.storage.delete(self)
+        storage.delete(self)

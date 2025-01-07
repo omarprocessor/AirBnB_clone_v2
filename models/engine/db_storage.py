@@ -1,65 +1,49 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
 import os
-
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from models.base_model import Base
+from models.place import Place
+from models.state import State
+from models.city import City
+from models.user import User
+from models.review import Review  # Ensure the model is properly imported
+from models.amenity import Amenity
 
 class DBStorage:
-    __engine = None
-    __session = None
-
     def __init__(self):
-        """Create an engine and session for the database."""
+        """Create engine and session for database interaction."""
         user = os.getenv('HBNB_MYSQL_USER')
         pwd = os.getenv('HBNB_MYSQL_PWD')
-        host = os.getenv('HBNB_MYSQL_HOST', 'localhost')
+        host = os.getenv('HBNB_MYSQL_HOST')
         db = os.getenv('HBNB_MYSQL_DB')
 
-        # Create engine and bind it to session
-        self.__engine = create_engine(
-            f'mysql+mysqldb://{user}:{pwd}@{host}/{db}',
-            pool_pre_ping=True
-        )
+        # Connection string for MySQL
+        self.__engine = create_engine(f'mysql+mysqldb://{user}:{pwd}@{host}/{db}', pool_pre_ping=True)
+        self.__session = None
 
-        if os.getenv('HBNB_ENV') == 'test':
-            self.__drop_all()
-
-        self.reload()
-
-    def __drop_all(self):
-        """Helper method to drop all tables during testing."""
-        from models import Base  # Import here to avoid circular import
-        Base.metadata.drop_all(self.__engine)
-
-    def all(self, cls=None):
-        """Query all objects or filtered by class."""
-        if cls:
-            objs = self.__session.query(cls).all()
-        else:
-            from models import Base  # Import here to avoid circular import
-            objs = self.__session.query(Base).all()
-
-        result = {}
-        for obj in objs:
-            result[f"{obj.__class__.__name__}.{obj.id}"] = obj
-        return result
+    def all(self):
+        objs = []
+        # Directly query the model class `Review`
+        objs.extend(self.__session.query(Review).all())  # Ensure `Review` is properly imported
+        # You can add other models in a similar way if necessary
+        return objs
 
     def new(self, obj):
-        """Add new object to the session."""
+        """Add the object to the session."""
         self.__session.add(obj)
 
     def save(self):
-        """Commit all changes in the session."""
+        """Commit changes to the session."""
         self.__session.commit()
 
     def delete(self, obj=None):
-        """Delete an object from the session."""
+        """Delete the object from the session."""
         if obj:
             self.__session.delete(obj)
             self.save()
 
     def reload(self):
-        """Create all tables in the database and initialize session."""
-        from models import Base  # Import here to avoid circular import
+        """Reload the session."""
         Base.metadata.create_all(self.__engine)
-        Session = sessionmaker(bind=self.__engine, expire_on_commit=False)
-        self.__session = scoped_session(Session)
+        Session = sessionmaker(bind=self.__engine)
+        self.__session = Session()
