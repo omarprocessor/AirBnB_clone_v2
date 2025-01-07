@@ -1,6 +1,5 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
-from models import Base
 import os
 
 
@@ -22,15 +21,21 @@ class DBStorage:
         )
 
         if os.getenv('HBNB_ENV') == 'test':
-            Base.metadata.drop_all(self.__engine)
+            self.__drop_all()
 
         self.reload()
+
+    def __drop_all(self):
+        """Helper method to drop all tables during testing."""
+        from models import Base  # Import here to avoid circular import
+        Base.metadata.drop_all(self.__engine)
 
     def all(self, cls=None):
         """Query all objects or filtered by class."""
         if cls:
             objs = self.__session.query(cls).all()
         else:
+            from models import Base  # Import here to avoid circular import
             objs = self.__session.query(Base).all()
 
         result = {}
@@ -54,6 +59,7 @@ class DBStorage:
 
     def reload(self):
         """Create all tables in the database and initialize session."""
+        from models import Base  # Import here to avoid circular import
         Base.metadata.create_all(self.__engine)
         Session = sessionmaker(bind=self.__engine, expire_on_commit=False)
         self.__session = scoped_session(Session)
