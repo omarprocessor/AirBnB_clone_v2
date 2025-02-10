@@ -13,8 +13,10 @@ class FileStorage:
         If cls is provided, returns only objects of that class
         """
         if cls:
-            # Filter by class if provided
-            return {key: obj for key, obj in FileStorage.__objects.items() if isinstance(obj, cls)}
+            return {
+                key: obj for key, obj in FileStorage.__objects.items()
+                if isinstance(obj, cls)
+            }
         return FileStorage.__objects
 
     def new(self, obj):
@@ -41,16 +43,16 @@ class FileStorage:
         from models.review import Review
 
         classes = {
-                    'BaseModel': BaseModel, 'User': User, 'Place': Place,
-                    'State': State, 'City': City, 'Amenity': Amenity,
-                    'Review': Review
-                  }
+            'BaseModel': BaseModel, 'User': User, 'Place': Place,
+            'State': State, 'City': City, 'Amenity': Amenity,
+            'Review': Review
+        }
         try:
             temp = {}
             with open(FileStorage.__file_path, 'r') as f:
                 temp = json.load(f)
                 for key, val in temp.items():
-                        self.all()[key] = classes[val['__class__']](**val)
+                    self.all()[key] = classes[val['__class__']](**val)
         except FileNotFoundError:
             pass
 
@@ -60,3 +62,7 @@ class FileStorage:
             key = obj.to_dict()['__class__'] + '.' + obj.id
             if key in FileStorage.__objects:
                 del FileStorage.__objects[key]
+
+    def close(self):
+        """Call the reload method to deserialize the JSON file to objects"""
+        self.reload()

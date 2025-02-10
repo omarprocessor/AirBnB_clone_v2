@@ -1,13 +1,14 @@
 import os
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from models.base_model import Base
 from models.place import Place
 from models.state import State
 from models.city import City
 from models.user import User
-from models.review import Review  # Ensure the model is properly imported
+from models.review import Review
 from models.amenity import Amenity
+
 
 class DBStorage:
     def __init__(self):
@@ -22,10 +23,9 @@ class DBStorage:
         self.__session = None
 
     def all(self):
+        """Query all objects from the database."""
         objs = []
-        # Directly query the model class `Review`
-        objs.extend(self.__session.query(Review).all())  # Ensure `Review` is properly imported
-        # You can add other models in a similar way if necessary
+        objs.extend(self.__session.query(Review).all())
         return objs
 
     def new(self, obj):
@@ -45,5 +45,9 @@ class DBStorage:
     def reload(self):
         """Reload the session."""
         Base.metadata.create_all(self.__engine)
-        Session = sessionmaker(bind=self.__engine)
+        Session = scoped_session(sessionmaker(bind=self.__engine))
         self.__session = Session()
+
+    def close(self):
+        """Close the current SQLAlchemy session."""
+        self.__session.close()

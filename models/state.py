@@ -12,3 +12,11 @@ class State(BaseModel, Base):
         back_populates="state",
         cascade="all, delete-orphan"
     )
+
+
+@property
+def cities(self):
+    """Returns the list of City objects linked to this State"""
+    from models import storage
+    from models.city import City
+    return [city for city in storage.all(City).values() if city.state_id == self.id]
